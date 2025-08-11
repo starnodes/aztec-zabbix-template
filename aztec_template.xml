@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>6.0</version>
+    <date>2025-08-11T22:13:10Z</date>
+    <groups>
+        <group>
+            <uuid>45073f35a3ca4ad48790c55f724fdc59</uuid>
+            <name>services</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <uuid>3bc0a40acaf94b3d9dd1885c6a09436e</uuid>
+            <template>Aztec node</template>
+            <name>Aztec node</name>
+            <groups>
+                <group>
+                    <name>services</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <uuid>247af9d96652494bbad2d56c9a5c09f5</uuid>
+                    <name>Aztec - Latest Block Number</name>
+                    <type>HTTP_AGENT</type>
+                    <key>aztec.latest_block_number</key>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.result.latest.number</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <url>{$SERVER_URL}</url>
+                    <posts>{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;node_getL2Tips&quot;,&quot;params&quot;:[],&quot;id&quot;:67}</posts>
+                    <request_method>POST</request_method>
+                    <tags>
+                        <tag>
+                            <tag>aztec</tag>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>2835bc985d594570822c70abe9016249</uuid>
+                    <name>Aztec - Remote Block Number</name>
+                    <type>HTTP_AGENT</type>
+                    <key>aztec.remote_block_number</key>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.[0].height</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <url>{$RPC_URL}</url>
+                    <tags>
+                        <tag>
+                            <tag>aztec</tag>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>37325b025cc64a4293650bfdd237f4fc</uuid>
+                    <name>Aztec 8080</name>
+                    <key>net.tcp.service[tcp,,8080]</key>
+                    <delay>30s</delay>
+                    <trends>180d</trends>
+                    <tags>
+                        <tag>
+                            <tag>aztec</tag>
+                        </tag>
+                    </tags>
+                    <triggers>
+                        <trigger>
+                            <uuid>5b0782be963e46a788dafbb9e1b06ec7</uuid>
+                            <expression>count(/Aztec node/net.tcp.service[tcp,,8080],#3,&quot;ne&quot;,1)&gt;2</expression>
+                            <recovery_mode>RECOVERY_EXPRESSION</recovery_mode>
+                            <recovery_expression>count(/Aztec node/net.tcp.service[tcp,,8080],#3,&quot;eq&quot;,1)</recovery_expression>
+                            <name>Aztec Node Down</name>
+                            <priority>HIGH</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+            </items>
+            <macros>
+                <macro>
+                    <macro>{$RPC_URL}</macro>
+                    <value>https://api.testnet.aztecscan.xyz/v1/temporary-api-key/l2/ui/blocks-for-table</value>
+                    <description>aztec rpc url</description>
+                </macro>
+                <macro>
+                    <macro>{$SERVER_URL}</macro>
+                    <value>http://88.88.88.88:8080</value>
+                    <description>ip address of your server and port</description>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+    <triggers>
+        <trigger>
+            <uuid>128c9512af264f8eb08cccaa8a86c90c</uuid>
+            <expression>last(/Aztec node/aztec.remote_block_number) - last(/Aztec node/aztec.latest_block_number) &gt; 3</expression>
+            <name>Aztec node sync failed!</name>
+            <priority>HIGH</priority>
+        </trigger>
+    </triggers>
+</zabbix_export>
